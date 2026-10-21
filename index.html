@@ -204,6 +204,11 @@ textarea { min-height: 200px; resize: vertical; font: 13px/1.45 ui-monospace, "S
 #acct-f { display: grid; gap: 10px; margin-top: 12px; } #acct-f input { width: 100%; box-sizing: border-box; }
 .save-warn { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 60; width: min(720px, calc(100vw - 32px)); box-sizing: border-box; padding: 12px 44px 12px 16px; border-radius: 12px; background: rgba(70, 40, 10, .95); border: 1px solid var(--gold); color: var(--ink); font-size: 14px; line-height: 1.45; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 .save-warn a { color: var(--gold-hi); } .save-warn button { position: absolute; right: 8px; top: 8px; padding: 4px 9px; }
+body.pad .pad-focus { outline: 3px solid var(--gold-hi) !important; outline-offset: 3px; box-shadow: 0 0 0 6px rgba(246, 212, 138, .25), 0 0 26px rgba(246, 212, 138, .55) !important; border-radius: 10px; position: relative; z-index: 5; }
+body.pad .card.pad-focus { transform: translateY(-6px) scale(1.04); }
+body.pad #hand-me .card.pad-focus { transform: translateY(-26px) scale(1.12); z-index: 20; }
+body.pad .menu button.pad-focus { background: rgba(230, 182, 92, .22); }
+body.pad .side::after { content: 'A select · B back · X card menu · Y zoom · ☰ next · LB/RB jump · LT/RT attack target · ⧉ Yaum'; display: block; font: 600 10.5px/1.5 var(--f-ui); letter-spacing: .04em; color: var(--dim); text-align: center; padding: 4px 2px 0; }
 .ver-chip { display: inline-block; margin: 6px auto 0; font: 600 12px/1 var(--f-ui); letter-spacing: .08em; color: var(--gold-hi); background: rgba(40, 30, 10, .55); border: 1px solid rgba(230, 182, 92, .45); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .ver-chip:hover, .ver-chip:focus-visible { background: rgba(80, 58, 18, .7); }
 .brand h1 + .ver-chip { display: table; }
@@ -8079,6 +8084,7 @@ function helpDialog() {
   <dt>Rewind</dt><dd>Something broke? <b>Rewind</b> rolls the table back to an earlier moment. Online, the other players approve it.</dd>
   <dt>Manual mode</dt><dd>Switch it on to resolve players' spells and triggers yourself. You can move, tap, cast or take any card, search any library and look at hands. Bots keep playing automatically.</dd>
   <dt>Stuck or bugged?</dt><dd>If nothing happens for a while you'll get a way to skip ahead. <b>Report problem</b> saves a file that shows exactly what went wrong.</dd>
+  <dt>Controller</dt><dd>Plug in an Xbox (or similar) controller and press any button. D-pad moves the highlight, A selects, B goes back, X opens a card's menu, Y zooms, ☰ is the big button. Press ⧉ View on the menu screen for the full list.</dd>
   <dt>Keyboard</dt><dd>Space presses the big button. Escape closes menus.</dd>
   </dl><div class="acts"><button class="btn gold" data-x="ok">Got it</button></div>`);
   $('[data-x=ok]', dlg).onclick = () => closeDialog(dlg);
@@ -9142,6 +9148,177 @@ function cloudBoot() {
     if (!skip) setTimeout(() => { if (!$('.scrim') && !$('#setup').hidden) accountDialog(store.get('cst_last_user', '') ? 'in' : 'in'); }, 1200);
   }
 }
+
+;
+/* =====================================================================
+   CONTROLLER SUPPORT (Xbox / standard gamepads, Edge and Chrome).
+   A gold highlight moves between everything you can press. The D-pad or
+   left stick moves it, A presses, B goes back, X opens a card's menu,
+   Y shows the card large, Menu presses the big button. LB/RB jump
+   between areas of the table, LT/RT pick who you're attacking, and the
+   right stick scrolls.
+   ===================================================================== */
+const Pad = {
+  on: false, idx: null, focus: null, prev: [], held: {}, raf: 0, zoomT: 0, lastMove: 0,
+  init() {
+    try { if ('gamepadInputEmulation' in navigator) navigator.gamepadInputEmulation = 'gamepad'; } catch (e) { } // Xbox Edge: real gamepad input, not a mouse cursor
+    addEventListener('gamepadconnected', e => { this.idx = e.gamepad.index; this.start(); toast(`Controller connected. <b>A</b> select · <b>B</b> back · <b>X</b> card menu · <b>Y</b> zoom · <b>☰</b> next.`); });
+    addEventListener('gamepaddisconnected', () => { this.idx = null; this.stopUse(); });
+    addEventListener('mousemove', () => { if (this.on && Date.now() - this.lastMove > 400) this.stopUse(); }, { passive: true });
+    // some browsers only report a pad after a button press, without an event
+    setInterval(() => { if (this.idx == null) { const g = this.pads().find(Boolean); if (g) { this.idx = g.index; this.start(); } } }, 1500);
+  },
+  pads() { try { return [...(navigator.getGamepads ? navigator.getGamepads() : [])]; } catch (e) { return []; } },
+  start() { if (!this.raf) this.raf = requestAnimationFrame(() => this.tick()); },
+  use() {
+    if (!this.on) { this.on = true; document.body.classList.add('pad'); }
+    this.lastMove = Date.now();
+    if (!this.focus || !this.focus.isConnected || !this.visible(this.focus) || !this.scope().includes(this.focus)) this.setFocus(this.firstTarget());
+  },
+  stopUse() { this.on = false; document.body.classList.remove('pad'); if (this.focus) this.focus.classList.remove('pad-focus'); this.focus = null; hideZoom && hideZoom(); },
+  tick() {
+    this.raf = 0;
+    const g = this.idx != null ? this.pads()[this.idx] : null;
+    if (g && g.connected !== false) {
+      const b = i => !!(g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > 0.5));
+      const ax = i => g.axes[i] || 0;
+      const dir = (b(12) || ax(1) < -0.55) ? 'up' : (b(13) || ax(1) > 0.55) ? 'down' : (b(14) || ax(0) < -0.55) ? 'left' : (b(15) || ax(0) > 0.55) ? 'right' : null;
+      this.repeat('dir', dir, d => { this.use(); this.move(d); });
+      const map = { 0: 'a', 1: 'b', 2: 'x', 3: 'y', 4: 'lb', 5: 'rb', 6: 'lt', 7: 'rt', 8: 'view', 9: 'menu' };
+      for (const [i, name] of Object.entries(map)) this.edge(name, b(+i), () => { const was = this.on; this.use(); if (!was && name !== 'menu' && name !== 'b') return; this.press(name); });
+      const sy = ax(3); if (Math.abs(sy) > 0.25) this.scroll(sy * 18);
+    }
+    this.raf = requestAnimationFrame(() => this.tick());
+  },
+  edge(k, down, fn) { if (down && !this.held[k]) fn(); this.held[k] = down; },
+  repeat(k, v, fn) {
+    const h = this.held[k] || { v: null, t: 0, n: 0 };
+    const now = performance.now();
+    if (v !== h.v) { h.v = v; h.n = 0; h.t = now; if (v) fn(v); }
+    else if (v && now - h.t > (h.n ? 110 : 380)) { h.t = now; h.n++; fn(v); }
+    this.held[k] = h;
+  },
+  visible(el) {
+    if (!el || !el.isConnected || el.closest('[hidden]') || el.disabled) return false;
+    const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return false;
+    const st = getComputedStyle(el); if (st.visibility === 'hidden' || st.display === 'none' || +st.opacity === 0) return false;
+    return r.bottom > -40 && r.top < innerHeight + 400 && r.right > -40 && r.left < innerWidth + 40;
+  },
+  /* everything the highlight can land on right now */
+  scope() {
+    const menu = $('.menu');
+    if (menu) return $$('button', menu).filter(e => this.visible(e));
+    const scrims = $$('.scrim'); const top = scrims[scrims.length - 1];
+    const generic = 'button, a[href], input:not([type=hidden]), select, textarea, .card, .precon, [data-sc], [data-ch], [data-f], .rw, label.toggle';
+    if (top) return $$(generic, top).filter(e => this.visible(e) && !(e.matches('label.toggle') && false));
+    if (!$('#game').hidden) {
+      const sel = '#game .card[data-iid], #game [data-player], #game [data-pile], #next, #endturn, #tools button, #tools-top button, #atk-targets button, #respond button, #stuck button, .yaum-bubble:not([hidden]) button, #yaum .yaum-btn, #side-toggle, #chat-go';
+      return $$(sel).filter(e => this.visible(e) && !e.closest('.ghost'));
+    }
+    return $$(generic, $('#setup')).concat($$('.topbar button')).filter(e => this.visible(e));
+  },
+  firstTarget() {
+    const s = this.scope();
+    const prefer = ['.scrim .btn.gold:not(:disabled)', '.menu button', '#hand-me .card.castable', '#next:not(:disabled)', '#hand-me .card', '#start'];
+    for (const p of prefer) { const e = s.find(x => x.matches(p)); if (e) return e; }
+    return s[0] || null;
+  },
+  setFocus(el) {
+    if (this.focus) this.focus.classList.remove('pad-focus');
+    this.focus = el; if (!el) return;
+    el.classList.add('pad-focus');
+    try { el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); } catch (e) { }
+    if (el.matches('input, select, textarea') && document.activeElement !== el) { /* wait for A to start typing */ }
+    else if (el.focus) try { el.focus({ preventScroll: true }); } catch (e) { }
+    // reading cards with a controller: show it large after a moment
+    { const r0 = el.getBoundingClientRect(); try { mouse = [r0.left + r0.width / 2, r0.top + r0.height / 2]; if (typeof flow !== 'undefined' && flow.target) drawArrowsSoon(); } catch (e) { } }
+    clearTimeout(this.zoomT); hideZoom && hideZoom();
+    const cv = el.matches('.card[data-iid]') && typeof cvFromEl === 'function' ? cvFromEl(el) : null;
+    if (cv) this.zoomT = setTimeout(() => { if (this.focus === el) { const r = el.getBoundingClientRect(); showZoom(cv, { clientX: r.left + r.width / 2, clientY: r.top }); } }, 450);
+  },
+  move(d) {
+    const s = this.scope(); if (!s.length) return;
+    const cur = this.focus && s.includes(this.focus) ? this.focus : null;
+    if (!cur) { this.setFocus(this.firstTarget()); return; }
+    const r = cur.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let best = null, bs = Infinity;
+    for (const e of s) {
+      if (e === cur) continue;
+      const q = e.getBoundingClientRect(); const x = q.left + q.width / 2, y = q.top + q.height / 2;
+      const dx = x - cx, dy = y - cy;
+      const main = d === 'left' ? -dx : d === 'right' ? dx : d === 'up' ? -dy : dy;
+      const side = d === 'left' || d === 'right' ? Math.abs(dy) : Math.abs(dx);
+      if (main <= 4) continue;
+      const sc = main + side * 2.2;
+      if (sc < bs) { bs = sc; best = e; }
+    }
+    if (best) { this.setFocus(best); Sfx.play('ui'); }
+  },
+  center(el) { const r = el.getBoundingClientRect(); return { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }; },
+  press(k) {
+    const el = this.focus && this.focus.isConnected ? this.focus : null;
+    const inGame = !$('#game').hidden && !$('.scrim') && !$('.menu');
+    switch (k) {
+      case 'a': {
+        if (!el) return;
+        if (el.matches('.card[data-iid]') && !el.closest('.scrim') && typeof clickCard === 'function') { const cv = cvFromEl(el); if (cv) clickCard(cv, this.center(el)); return; }
+        if (el.matches('input, textarea, select')) { el.focus(); if (el.type === 'checkbox') el.click(); return; }
+        el.click();
+        setTimeout(() => this.use(), 60);
+        return;
+      }
+      case 'b': {
+        if ($('.menu')) { closeMenu(); Sfx.play('ui'); return this.use(); }
+        const scrims = $$('.scrim'); const top = scrims[scrims.length - 1];
+        if (top) { const c = top.querySelector('[data-x=c]:not(:disabled), [data-x=n]:not(:disabled), [data-x=close], [data-x=cancel]') || (!top.dataset.locked && top.querySelector('[data-x=ok]')); if (c) c.click(); else if (!top.dataset.locked) closeDialog(top); return setTimeout(() => this.use(), 60); }
+        if (typeof flow !== 'undefined' && flow.target) { finishTarget(true); return; }
+        const side = $('.side.open'); if (side) { $('#side-toggle').click(); return; }
+        return;
+      }
+      case 'x': {
+        if (!el) return;
+        if (el.matches('.card[data-iid]') && typeof cardMenu === 'function') { const cv = cvFromEl(el); if (cv) { const c = this.center(el); cardMenu(cv, c.clientX, c.clientY); setTimeout(() => this.setFocus(this.firstTarget()), 30); } return; }
+        if (el.matches('[data-pile]')) { const [s, z] = el.dataset.pile.split(':'); const c = this.center(el); pileMenu(+s, z, c.clientX, c.clientY); setTimeout(() => this.setFocus(this.firstTarget()), 30); }
+        return;
+      }
+      case 'y': { if (el && el.matches('.card[data-iid]')) { const cv = cvFromEl(el); if (cv) zoomDialog(cv); setTimeout(() => this.use(), 60); } return; }
+      case 'menu': { const n = $('#next'); if (inGame && n && !n.disabled) { n.click(); } else if (!$('#game').hidden) { const g = $('.scrim .btn.gold:not(:disabled)'); if (g) g.click(); } else { const s = $('#start'); if (s && !$('.scrim')) s.click(); } return; }
+      case 'view': { if (!$('#game').hidden && typeof Yaum !== 'undefined' && Yaum.ask) Yaum.ask(); else padHelp(); return; }
+      case 'lb': case 'rb': return this.jump(k === 'rb' ? 1 : -1);
+      case 'lt': case 'rt': {
+        if (typeof flow !== 'undefined' && flow.attack) { const o = aliveOpps(); if (o.length > 1) { const i = o.indexOf(flow.atkTarget); setAtkTarget(o[(i + (k === 'rt' ? 1 : -1) + o.length) % o.length]); } return; }
+        this.scroll(k === 'rt' ? 260 : -260); return;
+      }
+    }
+  },
+  /* LB / RB: hop between areas of the table */
+  jump(dir) {
+    if ($('.scrim') || $('.menu') || $('#game').hidden) { this.move(dir > 0 ? 'right' : 'left'); return; }
+    const areas = ['#hand-me', '#field-me', '#opps', '.side'];
+    const cur = this.focus ? areas.findIndex(a => this.focus.closest(a)) : -1;
+    for (let k = 1; k <= areas.length; k++) {
+      const a = $(areas[(cur + dir * k + areas.length * 4) % areas.length]);
+      const t = this.scope().find(e => a && a.contains(e));
+      if (t) { this.setFocus(t); Sfx.play('ui'); return; }
+    }
+  },
+  scroll(dy) {
+    const scrims = $$('.scrim'); const top = scrims[scrims.length - 1];
+    const box = (top && (top.querySelector('.rw-list, .whatsnew, .grid-cards, .dialog'))) || (!$('#game').hidden ? $('#log') : document.scrollingElement);
+    if (box) box.scrollBy({ top: dy });
+  }
+};
+function padHelp() {
+  const dlg = openDialog(`<h3>Controller</h3><dl class="kv">
+  <dt>D-pad / left stick</dt><dd>Move the gold highlight</dd><dt>A</dt><dd>Select: cast a card, press a button, pick a target or blocker</dd>
+  <dt>B</dt><dd>Back / cancel</dd><dt>X</dt><dd>Card menu (abilities, counters, moving cards) or a pile's menu</dd>
+  <dt>Y</dt><dd>Show the card large</dd><dt>☰ Menu</dt><dd>The big button: next step, attack, end turn</dd>
+  <dt>⧉ View</dt><dd>Ask Yaum for advice</dd><dt>LB / RB</dt><dd>Jump between your hand, your table, opponents and the side panel</dd>
+  <dt>LT / RT</dt><dd>While attacking: choose which opponent. Otherwise: scroll the log</dd><dt>Right stick</dt><dd>Scroll</dd></dl>
+  <div class="acts"><button class="btn gold" data-x="ok">Got it</button></div>`, 'small');
+  $('[data-x=ok]', dlg).onclick = () => closeDialog(dlg);
+}
+Pad.init();
 
 ;
 /* =====================================================================
