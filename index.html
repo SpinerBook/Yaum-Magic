@@ -51,7 +51,7 @@ img { max-width: 100%; }
 .lbl { font: 600 11px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .row-in { display: flex; gap: 8px; }
 .row-in input { flex: 1; min-width: 0; }
-input[type=text], input[type=search], input[type=url], input[type=number], textarea, select { background: rgba(3, 9, 6, .85); border: 1px solid #2f4a35; color: var(--ink); border-radius: 9px; padding: 9px 11px; font: 14px var(--f-ui); width: 100%; }
+input[type=text], input[type=password], input[type=search], input[type=url], input[type=number], textarea, select { background: rgba(3, 9, 6, .85); border: 1px solid #2f4a35; color: var(--ink); border-radius: 9px; padding: 9px 11px; font: 14px var(--f-ui); width: 100%; }
 textarea { min-height: 200px; resize: vertical; font: 13px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 .hint { color: var(--dim); font-size: 13px; max-width: 65ch; margin: 0; }
 .hint b { color: var(--ink); font-weight: 600; }
@@ -194,6 +194,16 @@ textarea { min-height: 200px; resize: vertical; font: 13px/1.45 ui-monospace, "S
 .avatar.active-turn { box-shadow: 0 0 0 4px rgba(246, 212, 138, .35), 0 0 30px rgba(246, 212, 138, .5); animation: turnPulse 2.4s ease-in-out infinite; }
 @keyframes turnPulse { 50% { box-shadow: 0 0 0 7px rgba(246, 212, 138, .18), 0 0 44px rgba(246, 212, 138, .65); } }
 @media (prefers-reduced-motion: reduce) { .avatar.active-turn { animation: none; } }
+.acct-chip { display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px 6px 10px; border-radius: 999px; border: 1px solid rgba(230, 182, 92, .35); background: rgba(10, 22, 14, .78); color: var(--ink); cursor: pointer; font: 13px var(--f-ui); text-align: left; backdrop-filter: blur(6px); }
+.acct-chip:hover, .acct-chip:focus-visible { border-color: var(--gold); }
+@media (max-width: 520px) { .acct-chip small { display: none; } .acct-chip { padding: 6px 12px 6px 9px; } }
+.acct-chip span:last-child { display: grid; line-height: 1.15; } .acct-chip small { color: var(--dim); font-size: 11px; }
+.acct-dot { width: 9px; height: 9px; border-radius: 50%; background: #79d98f; box-shadow: 0 0 8px #79d98f; flex: none; }
+.acct-dot.pending { background: var(--gold); box-shadow: 0 0 8px var(--gold); } .acct-dot.error { background: var(--bad); box-shadow: 0 0 8px var(--bad); } .acct-dot.off { background: #6b7b70; box-shadow: none; }
+.acct-msg { color: #ffb4a6; min-height: 1.2em; margin: 4px 0 0; font-size: 14px; }
+#acct-f { display: grid; gap: 10px; margin-top: 12px; } #acct-f input { width: 100%; box-sizing: border-box; }
+.save-warn { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 60; width: min(720px, calc(100vw - 32px)); box-sizing: border-box; padding: 12px 44px 12px 16px; border-radius: 12px; background: rgba(70, 40, 10, .95); border: 1px solid var(--gold); color: var(--ink); font-size: 14px; line-height: 1.45; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.save-warn a { color: var(--gold-hi); } .save-warn button { position: absolute; right: 8px; top: 8px; padding: 4px 9px; }
 .ver-chip { display: inline-block; margin: 6px auto 0; font: 600 12px/1 var(--f-ui); letter-spacing: .08em; color: var(--gold-hi); background: rgba(40, 30, 10, .55); border: 1px solid rgba(230, 182, 92, .45); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .ver-chip:hover, .ver-chip:focus-visible { background: rgba(80, 58, 18, .7); }
 .brand h1 + .ver-chip { display: table; }
@@ -709,10 +719,10 @@ textarea#rp-note { width: 100%; box-sizing: border-box; background: rgba(0,0,0,.
 </defs></svg>
 <canvas id="scene" aria-hidden="true"></canvas>
 <main id="setup">
-  <div class="topbar"><button class="profile-chip" id="profile-btn" aria-label="Switch profile"><span class="pic" id="profile-pic"></span><span>Playing as <b id="profile-name">Player</b></span></button><button class="btn icon" id="music-btn" aria-label="Music" title="Music"><svg><use href="#i-music"/></svg></button></div>
+  <div class="topbar"><button class="acct-chip" id="account-btn" type="button" hidden></button><button class="profile-chip" id="profile-btn" aria-label="Switch profile"><span class="pic" id="profile-pic"></span><span>Playing as <b id="profile-name">Player</b></span></button><button class="btn icon" id="music-btn" aria-label="Music" title="Music"><svg><use href="#i-music"/></svg></button></div>
   <div class="setup-inner">
     <header class="brand">
-      <h1>Yaum Magic</h1><button class="ver-chip" id="whatsnew-btn" type="button" title="What's new">Version 7 · what's new</button>
+      <h1>Yaum Magic</h1><button class="ver-chip" id="whatsnew-btn" type="button" title="What's new">Version 7.1 · what's new</button>
       <p>Bring your Moxfield deck or grab any precon, then play bots or friends online in 2 to 4 player Commander.</p>
     </header>
     <div class="steps">
@@ -837,7 +847,7 @@ const FORGE_PATHS = {"binding geist":"b/binding_geist_spectral_binding.txt","bio
    Decisions are requested through choose(seat, request): bots answer
    via ai.js, people via the Router installed by the interface.
    ===================================================================== */
-const APP_VERSION = '7.0';
+const APP_VERSION = '7.1';
 let UI = { render() { }, log() { }, ev() { }, toast() { }, clash: null };
 let Router = null; // async (seat, req) => answer, for non-bot seats
 const COLORS = ['W', 'U', 'B', 'R', 'G'];
@@ -4647,7 +4657,8 @@ async function aiCastAll(pl) {
     if (!cands.length) break;
     let idx = 0;
     if (lvl(pl) === 'easy' && cands.length > 1 && rnd() < 0.4) idx = 1 + Math.floor(rnd() * (cands.length - 1));
-    const { c, alt } = cands[idx];
+    const choice = v2For(pl, 'cast') && lvl(pl) !== 'easy' ? aiPickNextCast(pl, cands) : cands[idx];
+    const { c, alt } = choice;
     tried.add(c.iid);
     if (lvl(pl) === 'easy' && rnd() < 0.15) continue;
     const ok = await castSpell(c, pl, alt != null ? { alt } : {});
@@ -4687,7 +4698,7 @@ async function aiActivate(pl, phase) {
 }
 
 /* ---------------- combat ---------------- */
-function aiChooseAttacks(pl) {
+function aiChooseAttacksV1(pl) {
   const mine = bf(pl).filter(canAttack).filter(c => dmgAmount(c) > 0 || c.goadedBy != null);
   if (!mine.length) return {};
   const opps = opponents(pl);
@@ -4740,7 +4751,7 @@ function aiChooseAttacks(pl) {
   for (const [d, n] of Object.entries(byDef)) { const tax = attackTax(pl, +d, n); if (tax > budget) for (const [id, dd] of Object.entries(assign)) if (dd === +d) delete assign[id]; else budget -= tax; }
   return assign;
 }
-function aiBlocks(def, atkIds) {
+function aiBlocksV1(def, atkIds) {
   const atks = atkIds.map(id => G.cards[id]).filter(Boolean).sort((a, b) => dmgAmount(b) - dmgAmount(a));
   const avail = bf(def).filter(c => isCreature(c) && !c.tapped);
   const used = new Set(); const blocks = {};
@@ -4861,6 +4872,290 @@ async function aiTurnInner(pl) {
   await sleep(Settings.speed / 2);
   if (G.active === pl && !G.over) await endTurn(pl);
 }
+
+;
+/* =====================================================================
+   BOT BRAIN v2: combat planning by simulation.
+   Attacks: every candidate plan is played out against the blocks the
+   defender would really make, then scored on damage, trades, lethal and
+   the counter-attack it leaves us open to. Blocks: value blocks, trades
+   and chump blocks only when the incoming damage would kill.
+   Spells: pick the set of cards that spends the most mana for the most
+   value this turn, ramp first.
+   ===================================================================== */
+const aiV1 = pl => !!(G && G.aiV1 && G.aiV1[pl]);
+/* tuning knobs; each bot also gets a personality (some swing hard, some sit back) */
+let AI_TUNE = { dmg: 1.5, loss: 0.85, risk: 0.8 };
+function aiTune(pl) {
+  const t = { ...AI_TUNE };
+  const p = G && G.aiPersona && G.aiPersona[pl];
+  if (p) { t.dmg *= p.aggro; t.risk /= p.aggro; }
+  return t;
+}
+const lifeOf = pl => P(pl).life;
+const cmdOf = c => c.isCommander;
+
+/* ---------- combat simulation ---------- */
+// damage an attacker deals to a player if unblocked
+const faceDmg = a => dmgAmount(a) * (hasKw(a, 'double strike') ? 2 : 1);
+// resolve one attacker against its blockers; returns what dies and what tramples over
+function clashOutcome(a, bls) {
+  const out = { atkDies: false, dead: [], through: 0 };
+  if (!bls.length) { out.through = faceDmg(a); return out; }
+  const aFirst = firstStrike(a);
+  let incoming = 0, aDeath = false;
+  // blockers with first strike hit before a non-first-striker
+  for (const b of bls) if (firstStrike(b) && !aFirst) { if (kills(b, a)) aDeath = true; incoming += dmgAmount(b); }
+  // the attacker assigns damage in order, killing what it can
+  let pool = aDeath ? 0 : dmgAmount(a) * (hasKw(a, 'double strike') ? 2 : 1);
+  const dt = hasKw(a, 'deathtouch');
+  for (const b of bls.slice().sort((x, y) => value(y) - value(x))) {
+    if (pool <= 0) break;
+    if (hasKw(b, 'indestructible')) { pool -= Math.max(1, toughness(b) - b.damage); continue; }
+    const need = dt ? 1 : Math.max(0, toughness(b) - b.damage);
+    if (pool >= need) { out.dead.push(b); pool -= need; } else pool = 0;
+  }
+  if (hasKw(a, 'trample') && pool > 0) out.through = pool;
+  // the rest of the blockers strike back (the dead ones still deal damage unless first strike killed them first)
+  if (!aDeath) {
+    const tough = toughness(a) - a.damage;
+    let dmg = 0, touch = false;
+    for (const b of bls) { if (firstStrike(b) && !aFirst) continue; if (aFirst && !hasKw(a, 'double strike') && out.dead.includes(b)) continue; dmg += dmgAmount(b); if (hasKw(b, 'deathtouch') && dmgAmount(b) > 0) touch = true; }
+    if (!hasKw(a, 'indestructible') && (dmg + incoming >= tough || touch)) aDeath = true;
+  }
+  out.atkDies = aDeath && !hasKw(a, 'indestructible');
+  return out;
+}
+// play out a set of attackers into one defender's predicted blocks
+function simulateAttack(def, atks) {
+  const blocks = predictBlocks(def, atks);
+  const res = { dmg: 0, poison: 0, cmd: {}, atkLost: [], defLost: [], blocks };
+  for (const a of atks) {
+    const bls = (blocks[a.iid] || []).map(id => G.cards[id]).filter(Boolean);
+    const o = clashOutcome(a, bls);
+    if (o.atkDies) res.atkLost.push(a);
+    res.defLost.push(...o.dead);
+    if (o.through > 0) {
+      if (hasKw(a, 'infect')) res.poison += o.through; else res.dmg += o.through;
+      if (cmdOf(a) && !bls.length) res.cmd[a.iid] = o.through;
+    }
+  }
+  return res;
+}
+const isLethal = (def, r) => r.dmg >= lifeOf(def) || (P(def).poison || 0) + r.poison >= 10 || Object.entries(r.cmd).some(([id, n]) => (P(def).cmdDmg[id] || 0) + n >= 21);
+
+/* ---------- blocking ---------- */
+function predictBlocks(def, atks) {
+  const ids = atks.map(a => a.iid);
+  try { return blockPlan(def, ids, true); } catch (e) { return {}; }
+}
+function blockPlan(def, atkIds, hypothetical) {
+  const atks = atkIds.map(id => G.cards[id]).filter(Boolean);
+  const avail = bf(def).filter(c => isCreature(c) && !c.tapped && c.zone === 'battlefield');
+  const level = lvl(def);
+  const used = new Set(); const blocks = {};
+  const life = lifeOf(def);
+  const through = () => atks.filter(a => !blocks[a.iid]).reduce((n, a) => n + (hasKw(a, 'infect') ? 0 : faceDmg(a)), 0)
+    + atks.filter(a => blocks[a.iid] && hasKw(a, 'trample')).reduce((n, a) => n + clashOutcome(a, blocks[a.iid].map(id => G.cards[id])).through, 0);
+  const poisonIn = () => atks.filter(a => !blocks[a.iid] && hasKw(a, 'infect')).reduce((n, a) => n + faceDmg(a), 0);
+  const cmdDanger = a => cmdOf(a) && (P(def).cmdDmg[a.iid] || 0) + faceDmg(a) >= 21;
+  const lifeW = 0.25 + Math.max(0, 40 - life) / 45; // how much each point of damage hurts
+  const canB = (b, a) => !used.has(b.iid) && canBlockPair(b, a);
+  const single = Settings.singleBlock;
+  // 1) value blocks: kill and survive, or a trade that's in our favour, or soak damage safely
+  const options = [];
+  for (const a of atks) {
+    if (hasKw(a, 'menace')) continue;
+    for (const b of avail) {
+      if (!canBlockPair(b, a)) continue;
+      const o = clashOutcome(a, [b]);
+      const killsA = o.atkDies, dies = o.dead.includes(b);
+      const saved = (hasKw(a, 'trample') ? faceDmg(a) - o.through : faceDmg(a)) * lifeW;
+      let g = saved + (killsA ? value(a) + (cmdOf(a) ? 3 : 0) : 0) - (dies ? value(b) : 0);
+      if (dies && !killsA && !cmdDanger(a)) g -= 2; // a chump block is a last resort
+      if (level === 'easy') g += (Math.random() - 0.5) * 3;
+      options.push({ a, b, g, killsA, dies });
+    }
+  }
+  options.sort((x, y) => y.g - x.g);
+  for (const o of options) {
+    if (blocks[o.a.iid] || used.has(o.b.iid)) continue;
+    const good = (o.killsA && !o.dies) || (!o.dies && o.g > 0.5) || (o.killsA && o.g > 0.5 && level !== 'easy');
+    if (!good) continue;
+    blocks[o.a.iid] = [o.b.iid]; used.add(o.b.iid);
+  }
+  // 2) gang blocks: two creatures together kill a big attacker and at most one dies
+  if (!single && level !== 'easy') {
+    for (const a of atks.slice().sort((x, y) => value(y) - value(x))) {
+      if (blocks[a.iid] || value(a) < 4) continue;
+      const cands = avail.filter(b => canB(b, a));
+      let best = null;
+      for (let i = 0; i < cands.length; i++) for (let j = i + 1; j < cands.length; j++) {
+        const pair = [cands[i], cands[j]]; const o = clashOutcome(a, pair);
+        if (!o.atkDies) continue;
+        const lost = o.dead.reduce((s, b) => s + value(b), 0);
+        const g = value(a) - lost + faceDmg(a) * lifeW;
+        if (g > 1 && (!best || g > best.g)) best = { pair, g };
+      }
+      if (best) { blocks[a.iid] = best.pair.map(b => b.iid); best.pair.forEach(b => used.add(b.iid)); }
+    }
+  }
+  // menace attackers need two blockers
+  for (const a of atks.filter(x => hasKw(x, 'menace') && !blocks[x.iid])) {
+    const cands = avail.filter(b => canB(b, a)).sort((x, y) => value(x) - value(y));
+    if (cands.length < 2) continue;
+    const pair = cands.slice(0, 2); const o = clashOutcome(a, pair);
+    const lost = o.dead.reduce((s, b) => s + value(b), 0);
+    if ((o.atkDies && lost < value(a)) || through() >= life) { blocks[a.iid] = pair.map(b => b.iid); pair.forEach(b => used.add(b.iid)); }
+  }
+  // 3) survival: chump the biggest threats until the damage is no longer lethal
+  const lethalNow = () => through() >= life || (P(def).poison || 0) + poisonIn() >= 10 || atks.some(a => !blocks[a.iid] && cmdDanger(a));
+  if (lethalNow() || (level === 'hard' && through() >= life * 0.6)) {
+    for (const a of atks.slice().sort((x, y) => (cmdDanger(y) ? 99 : faceDmg(y)) - (cmdDanger(x) ? 99 : faceDmg(x)))) {
+      if (!lethalNow() && !(level === 'hard' && through() >= life * 0.6)) break;
+      if (blocks[a.iid]) continue;
+      const need = hasKw(a, 'menace') ? 2 : 1;
+      const cands = avail.filter(b => canB(b, a)).sort((x, y) => value(x) - value(y));
+      if (cands.length < need) continue;
+      const pick = cands.slice(0, need);
+      blocks[a.iid] = pick.map(b => b.iid); pick.forEach(b => used.add(b.iid));
+    }
+  }
+  if (single) for (const k of Object.keys(blocks)) if (!hasKw(G.cards[k], 'menace')) blocks[k] = blocks[k].slice(0, 1);
+  return blocks;
+}
+
+/* ---------- attacking ---------- */
+// what an opponent could swing back at us next turn, given who we keep home
+function crackback(pl, homeIds) {
+  const home = bf(pl).filter(c => isCreature(c) && homeIds.has(c.iid) && !c.tapped);
+  let worst = 0, total = 0;
+  for (const o of opponents(pl)) {
+    const theirs = bf(o).filter(c => isCreature(c) && (dmgAmount(c) > 0) && !hasKw(c, 'defender')).map(c => ({ c, d: faceDmg(c) })).sort((x, y) => y.d - x.d);
+    // our blockers soak their biggest hits (one each, if they can block it)
+    const used = new Set(); let through = 0;
+    for (const { c, d } of theirs) {
+      const b = home.find(h => !used.has(h.iid) && !(hasKw(c, 'flying') && !hasKw(h, 'flying') && !hasKw(h, 'reach')));
+      if (b && !hasKw(c, 'menace')) { used.add(b.iid); if (hasKw(c, 'trample')) through += Math.max(0, d - toughness(b)); }
+      else through += d;
+    }
+    worst = Math.max(worst, through); total += through;
+  }
+  return { worst, total };
+}
+function targetWeight(pl, o) {
+  // how much we want to hurt this opponent
+  let w = (0.6 + Math.max(0, 40 - lifeOf(o)) / 50) * aiTune(pl).dmg;
+  w += Math.min(1.2, threatOf(o, pl) / 40);
+  if (P(pl).lastAttackedBy === o) w += 0.35;
+  if (G.monarch === o) w += 0.5;
+  if (G.campaignBossOf != null && G.campaignBossOf === pl) w += 0.2;
+  return w;
+}
+function planScore(pl, plan, opts) {
+  // plan: Map attacker -> defender seat
+  const byDef = new Map();
+  for (const [a, d] of plan) { if (!byDef.has(d)) byDef.set(d, []); byDef.get(d).push(a); }
+  let s = 0, lethal = false;
+  for (const [d, atks] of byDef) {
+    const r = simulateAttack(d, atks);
+    if (isLethal(d, r)) { s += 400 + lifeOf(d); lethal = true; }
+    s += targetWeight(pl, d) * (r.dmg + r.poison * 4 + Object.values(r.cmd).reduce((x, y) => x + y, 0) * 0.5);
+    s += r.defLost.reduce((x, c) => x + value(c), 0) * 0.9;
+    s -= r.atkLost.reduce((x, c) => x + value(c) + (cmdOf(c) ? 4 : 0), 0) * opts.lossW;
+  }
+  // keep enough at home
+  const home = new Set(bf(pl).filter(c => isCreature(c) && (!plan.has(c) || hasKw(c, 'vigilance'))).map(c => c.iid));
+  const cb = crackback(pl, home);
+  const myLife = lifeOf(pl);
+  if (!lethal || opponents(pl).length > 1) {
+    const risk = cb.worst + (cb.total - cb.worst) * 0.35;
+    if (risk >= myLife) s -= 300;
+    else s -= risk * opts.riskW * (0.4 + Math.max(0, 40 - myLife) / 30);
+  }
+  return s;
+}
+function aiChooseAttacksV2(pl) {
+  const level = lvl(pl);
+  const opps = opponents(pl); if (!opps.length) return {};
+  const mine = bf(pl).filter(canAttack).filter(c => dmgAmount(c) > 0 || c.goadedBy != null);
+  if (!mine.length) return {};
+  const round = Math.ceil(G.turn / Math.max(2, G.players.length));
+  const T = aiTune(pl);
+  const opts = {
+    lossW: (level === 'easy' ? 0.6 : level === 'hard' ? 1.0 : 0.9) * T.loss,
+    riskW: (level === 'easy' ? 0.15 : level === 'hard' ? 0.55 : 0.4) * T.risk
+  };
+  // the longer the game, the less patient: bots stop sitting behind their creatures
+  if (round >= 8) opts.riskW *= 0.75; if (round >= 14) { opts.riskW *= 0.6; opts.lossW *= 0.85; }
+  const plan = new Map();
+  // goaded creatures must attack someone other than the goader
+  for (const c of mine) if (c.goadedBy != null) { const t = opps.filter(o => o !== c.goadedBy && canAttackPlayer(c, o)).sort((a, b) => lifeOf(a) - lifeOf(b))[0] ?? opps.find(o => canAttackPlayer(c, o)); if (t != null) plan.set(c, t); }
+  const free = mine.filter(c => !plan.has(c));
+  let best = planScore(pl, plan, opts);
+  // greedy: add the attacker/target pair that improves the plan most, until nothing helps
+  for (let guard = 0; guard < free.length + 2; guard++) {
+    let pick = null;
+    for (const c of free) {
+      if (plan.has(c)) continue;
+      for (const o of opps) {
+        if (!canAttackPlayer(c, o)) continue;
+        plan.set(c, o); const s = planScore(pl, plan, opts); plan.delete(c);
+        if (s > best + 0.05 && (!pick || s > pick.s)) pick = { c, o, s };
+      }
+    }
+    if (!pick) break;
+    plan.set(pick.c, pick.o); best = pick.s;
+  }
+  // also consider sending everything at each single opponent (alpha strikes find lethal the greedy pass can miss)
+  for (const o of opps) {
+    const all = new Map(plan); for (const c of free) if (canAttackPlayer(c, o)) all.set(c, o);
+    const s = planScore(pl, all, opts);
+    if (s > best + 1) { plan.clear(); for (const [k, v] of all) plan.set(k, v); best = s; }
+  }
+  // easier bots make human-like mistakes
+  if (level === 'easy') { for (const c of free) if (!plan.has(c) && Math.random() < 0.2) { const o = opps[Math.floor(Math.random() * opps.length)]; if (canAttackPlayer(c, o)) plan.set(c, o); } for (const c of [...plan.keys()]) if (c.goadedBy == null && Math.random() < 0.15) plan.delete(c); }
+  const assign = {}; for (const [c, o] of plan) assign[c.iid] = o;
+  // attack taxes (Propaganda effects): drop attackers we can't pay for
+  const byDef = {}; for (const d of Object.values(assign)) byDef[d] = (byDef[d] || 0) + 1;
+  let budget = totalMana(pl);
+  for (const [d, n] of Object.entries(byDef)) { const tax = attackTax(pl, +d, n); if (tax > budget) for (const k of Object.keys(assign)) if (assign[k] === +d) delete assign[k]; else budget -= tax; }
+  return assign;
+}
+
+/* ---------- casting: spend the mana well ---------- */
+function aiPickNextCast(pl, cands) {
+  // cands: [{c, s, alt}] already filtered to castable. Pick the first card of the best affordable bundle.
+  if (cands.length <= 1) return cands[0] || null;
+  const avail = totalMana(pl);
+  const costOfC = o => Math.max(0, o.alt != null ? (parseManaCost(altCostOf(o.c, pl, altsOf(o.c)[o.alt])).g + parseManaCost(altCostOf(o.c, pl, altsOf(o.c)[o.alt])).pips.length) : (cdef(o.c).cmc || 0));
+  const list = cands.slice(0, 10).map(o => ({ ...o, cost: costOfC(o), ramp: isRampCard(o.c) }));
+  let bestSet = null, bestVal = -1;
+  const n = list.length;
+  for (let mask = 1; mask < (1 << n); mask++) {
+    let cost = 0, val = 0;
+    for (let i = 0; i < n; i++) if (mask & (1 << i)) { cost += list[i].cost; val += list[i].s + 0.6 * list[i].cost; }
+    if (cost > avail) continue;
+    if (val > bestVal) { bestVal = val; bestSet = mask; }
+  }
+  if (!bestSet) return list.sort((a, b) => b.s - a.s)[0];
+  const chosen = list.filter((_, i) => bestSet & (1 << i));
+  // ramp and card draw first so the rest can use the mana/cards, then the biggest threat
+  chosen.sort((a, b) => (b.ramp - a.ramp) || (b.cost - a.cost));
+  return chosen[0];
+}
+function isRampCard(c) {
+  const pr = prog(c);
+  if (!isLand(c) && pr.mana.length) return 1;
+  if (pr.spell && pr.spell.api === 'ChangeZone' && /Land/.test(pr.spell.p.ChangeType || '') && /Battlefield/.test(pr.spell.p.Destination || '')) return 1;
+  if (pr.trigs.some(t => t.sa && t.sa.api === 'ChangeZone' && /Land/.test(t.sa.p.ChangeType || ''))) return 1;
+  return 0;
+}
+
+/* entry points used by the engine (v1 kept for side-by-side testing) */
+const v2For = (pl, part) => !aiV1(pl) && !(G.aiOff && G.aiOff[part]);
+function aiChooseAttacks(pl) { return v2For(pl, 'attack') ? aiChooseAttacksV2(pl) : aiChooseAttacksV1(pl); }
+function aiBlocks(def, atkIds) { return v2For(def, 'block') ? blockPlan(def, atkIds) : aiBlocksV1(def, atkIds); }
 
 ;
 /* =====================================================================
@@ -5069,6 +5364,9 @@ const Session = {
     Router = (seat, req) => this.route(seat, req);
     newGame(seats.map(s => ({ name: s.name, kind: s.kind === 'bot' ? 'bot' : 'human', level: s.level, deck: s.deck })), { viewer: -1 });
     G.players.forEach((p, i) => { p.remote = seats[i].kind === 'remote'; });
+    // every bot gets a temperament from its name: some swing hard every turn, some play patiently
+    G.aiPersona = {};
+    seats.forEach((s, i) => { if (s.kind !== 'bot') return; let h = 0; for (const ch of String(s.name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; G.aiPersona[i] = { aggro: s.boss ? 1.3 : 0.9 + (h % 50) / 100 }; });
   },
   route(seat, req) {
     const s = this.seats[seat];
@@ -5686,6 +5984,19 @@ const Profiles = (() => {
     clearDecks() { store.set(`cst_p_${cur}_decks`, []); },
     prefs: () => store.get(`cst_p_${cur}_prefs`, {}),
     savePrefs(p) { store.set(`cst_p_${cur}_prefs`, p); },
+    snapshot(id) { const p = list.find(x => x.id === id) || me(); return { profile: { ...p }, decks: store.get(`cst_p_${p.id}_decks`, []), prefs: store.get(`cst_p_${p.id}_prefs`, {}) }; },
+    link(id, username) { const p = list.find(x => x.id === id); if (p) { p.account = username; store.set('cst_profiles', list); } },
+    adopt(data, id, username) {
+      let p = id && list.find(x => x.id === id);
+      if (!p) p = list.find(x => x.account && username && x.account.toLowerCase() === String(username).toLowerCase());
+      if (!p) { p = { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) }; list.push(p); }
+      const src = (data && data.profile) || {};
+      for (const k of ['name', 'avatar', 'portrait', 'sleeve', 'title', 'frame', 'yaum', 'scene']) if (src[k] !== undefined) p[k] = src[k];
+      p.name = p.name || username || 'Player'; p.account = username || p.account;
+      store.set(`cst_p_${p.id}_decks`, (data && data.decks) || []); store.set(`cst_p_${p.id}_prefs`, (data && data.prefs) || {});
+      store.set('cst_profiles', list);
+      return p.id;
+    },
     exportCode() { const data = { profile: me(), decks: this.decks(), prefs: this.prefs() }; return btoa(unescape(encodeURIComponent(JSON.stringify(data)))); },
     importCode(code) { const data = JSON.parse(decodeURIComponent(escape(atob(code.trim())))); const p = this.create(data.profile && data.profile.name || 'Imported'); if (data.profile && data.profile.avatar) this.setAvatar(data.profile.avatar); if (data.profile) this.setLook({ portrait: data.profile.portrait, sleeve: data.profile.sleeve, title: data.profile.title, frame: data.profile.frame, yaum: data.profile.yaum, scene: data.profile.scene }); store.set(`cst_p_${p.id}_decks`, data.decks || []); store.set(`cst_p_${p.id}_prefs`, data.prefs || {}); return p; }
   };
@@ -7739,6 +8050,8 @@ function musicDialog() {
   $('[data-x=ok]', dlg).onclick = () => closeDialog(dlg);
 }
 const WHATS_NEW = [
+  ['New in 7.1: smarter bots', 'The bots were rebuilt. Before attacking they play out every option against the blocks you would actually make, go for lethal when it is there, and stop sitting back in long games. Each bot also has its own temperament: some swing every turn, some wait for the right moment.'],
+  ['New in 7.1: accounts', 'Create an account with a username and password (top right) and your profile, decks, campaign and unlocks are saved online. Log in from any browser or device to pick up where you left off.', 'cloud'],
   ['Rewind', 'Something went wrong? Roll the table back to any recent moment from the Rewind button. Online, the other players approve it first.'],
   ['Manual mode', 'Turn off automation for players: cast a card and do what it says yourself. You can move, tap, cast or steal any card, search any library, peek at hands and more. Bots keep playing normally.'],
   ['No more frozen games', 'If a bot gets tangled up it passes instead of stalling, and a "game looks stuck" bar offers a way out. Runaway draws and token loops are stopped.'],
@@ -7748,7 +8061,7 @@ const WHATS_NEW = [
   ['Smarter cards and bots', 'Hundreds of rules fixes from simulated games: "you may" choices, once-per-turn triggers, coin-flip loops, Isperia, Bontu and many more. Bots now push to finish long games.']
 ];
 function whatsNewDialog() {
-  const dlg = openDialog(`<h3>What's new in Version 7</h3><div class="whatsnew">${WHATS_NEW.map(([h, t]) => `<section><h4>${esc(h)}</h4><p>${esc(t)}</p></section>`).join('')}</div><div class="acts"><button class="btn gold" data-x="ok">Let's play</button></div>`, 'small');
+  const dlg = openDialog(`<h3>What's new in Version 7.1</h3><div class="whatsnew">${WHATS_NEW.filter(x => x[2] !== 'cloud' || Cloud.on()).map(([h, t]) => `<section><h4>${esc(h)}</h4><p>${esc(t)}</p></section>`).join('')}</div><div class="acts"><button class="btn gold" data-x="ok">Let's play</button></div>`, 'small');
   $('[data-x=ok]', dlg).onclick = () => closeDialog(dlg);
   store.set('cst_seen_ver', APP_VERSION);
 }
@@ -8528,7 +8841,7 @@ function boot() {
   const vo = $('#voice-opts'); if (vo) { vo.innerHTML = voiceToggles(); bindVoiceToggles(vo); }
   $('#profile-btn').onclick = () => profileDialog();
   { const wn = $('#whatsnew-btn'); if (wn) wn.onclick = () => { Sfx.play('ui'); whatsNewDialog(); }; }
-  if (store.get('cst_seen_ver', '') !== APP_VERSION) setTimeout(() => { if (!$('.scrim') && !$('#setup').hidden) whatsNewDialog(); }, 900);
+  if (store.get('cst_seen_ver', '') !== APP_VERSION) setTimeout(() => { if (!$('.scrim') && !$('#setup').hidden && !(Cloud.on() && !Cloud.sess)) whatsNewDialog(); }, 900);
   bindGameInput();
   let t = 0; $('#deck-text').addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { checkDeckText(); renderProfileChip(); if (Client.ready) { Client.ready = false; Client.send({ t: 'unready' }); Client.render(); } }, 250); });
   document.addEventListener('pointerdown', () => Sfx.init(), { once: true });
@@ -8618,6 +8931,217 @@ const Story = {
   addDeck(key) { const s = this.st(); if (key && PRECONS[key] && !s.decks.includes(key)) { s.decks.push(key); savePrefs(); return true; } return false; },
   sourceText(id) { const i = UNLOCK_SOURCE[id]; return i == null ? 'Story reward' : `Beat chapter ${i + 1}: ${CHAPTERS[i]}`; }
 };
+
+;
+/* =====================================================================
+   ACCOUNTS: username + password, saved online (Google Firebase).
+   Firebase Auth checks the password; Firestore keeps one save per
+   account (profile, decks, settings, campaign and unlocks). Local
+   storage is still used, so the game works offline; the online copy is
+   what brings an account back in a fresh tab or on another device.
+   ===================================================================== */
+const FIREBASE = Object.assign({ apiKey: '', projectId: '' }, window.__FIREBASE || {}); // filled in when the project is set up
+const Cloud = {
+  sess: store.get('cst_cloud', null), timer: 0, busy: false, lastErr: null, status: 'idle',
+  on() { return !!(FIREBASE.apiKey && FIREBASE.projectId); },
+  emailOf(u) { return String(u).trim().toLowerCase() + '@players.yaum-magic.app'; },
+  validName(u) { return /^[a-z0-9_]{3,20}$/i.test(String(u).trim()); },
+  save() { store.set('cst_cloud', this.sess); },
+  user() { return this.sess && this.sess.username; },
+  linkedId() { return this.sess && this.sess.profileId; },
+  errText(code) {
+    const c = String(code || '');
+    if (/EMAIL_EXISTS/.test(c)) return 'That username is already taken.';
+    if (/INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND|INVALID_EMAIL/.test(c)) return 'Wrong username or password.';
+    if (/WEAK_PASSWORD/.test(c)) return 'Pick a password with at least 6 characters.';
+    if (/TOO_MANY_ATTEMPTS/.test(c)) return 'Too many tries. Wait a few minutes and try again.';
+    if (/USER_DISABLED/.test(c)) return 'This account has been disabled.';
+    if (/network|Failed to fetch|NetworkError/i.test(c)) return "Couldn't reach the account server. Check your internet connection.";
+    return 'Something went wrong with the account server (' + c.slice(0, 60) + ').';
+  },
+  async authCall(kind, body) {
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:${kind}?key=${encodeURIComponent(FIREBASE.apiKey)}`;
+    let r; try { r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, returnSecureToken: true }) }); }
+    catch (e) { throw new Error('network'); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error((j.error && j.error.message) || 'HTTP ' + r.status);
+    return j;
+  },
+  setTokens(j, username) {
+    this.sess = { ...(this.sess || {}), uid: j.localId || j.user_id, username: username || (this.sess && this.sess.username), idToken: j.idToken || j.id_token, refresh: j.refreshToken || j.refresh_token, exp: Date.now() + (+(j.expiresIn || j.expires_in || 3600) - 120) * 1000 };
+    this.save();
+  },
+  async token() {
+    if (!this.sess) throw new Error('not signed in');
+    if (this.sess.idToken && Date.now() < this.sess.exp) return this.sess.idToken;
+    let r; try { r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(FIREBASE.apiKey)}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(this.sess.refresh) }); }
+    catch (e) { throw new Error('network'); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { if (/TOKEN_EXPIRED|INVALID_REFRESH_TOKEN|USER_NOT_FOUND/.test(JSON.stringify(j))) { this.sess = null; this.save(); renderAccountChip(); } throw new Error((j.error && j.error.message) || 'refresh failed'); }
+    this.setTokens(j); return this.sess.idToken;
+  },
+  docUrl() { return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(FIREBASE.projectId)}/databases/(default)/documents/saves/${encodeURIComponent(this.sess.uid)}`; },
+  async getSave() {
+    const t = await this.token();
+    let r; try { r = await fetch(this.docUrl(), { headers: { Authorization: 'Bearer ' + t } }); } catch (e) { throw new Error('network'); }
+    if (r.status === 404) return null;
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error((j.error && j.error.message) || 'HTTP ' + r.status);
+    const f = j.fields || {};
+    try { return { data: JSON.parse(f.data.stringValue), updated: +(f.updated && f.updated.integerValue) || 0 }; } catch (e) { return null; }
+  },
+  async putSave(data, keepalive) {
+    const t = await this.token();
+    const body = JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data) }, updated: { integerValue: String(Date.now()) }, username: { stringValue: this.sess.username || '' } } });
+    let r; try { r = await fetch(this.docUrl(), { method: 'PATCH', headers: { Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' }, body, keepalive: !!keepalive && body.length < 60000 }); } catch (e) { throw new Error('network'); }
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error((j.error && j.error.message) || 'HTTP ' + r.status); }
+    this.sess.synced = Date.now(); this.save();
+  },
+  /* the online copy wins when you sign in: it becomes (or refreshes) this device's profile for the account */
+  adopt(data) {
+    this.quiet = true;
+    try { var id = Profiles.adopt(data, this.sess.profileId, this.sess.username); } finally { this.quiet = false; }
+    this.sess.profileId = id; this.save();
+    Profiles.switchTo(id); this.status = 'saved'; this.sess.synced = Date.now(); this.save();
+  },
+  async afterLogin(isNew) {
+    const remote = isNew ? null : await this.getSave();
+    if (remote && remote.data) this.adopt(remote.data);
+    else {
+      // brand-new account: it starts from the profile you're playing as now
+      const cur = Profiles.current();
+      this.sess.profileId = cur.id; this.save();
+      Profiles.link(cur.id, this.sess.username);
+      await this.putSave(Profiles.snapshot(cur.id));
+    }
+    store.set('cst_last_user', this.sess.username);
+    Menu.refresh(); renderAccountChip();
+    if (typeof applyProfileScene === 'function') applyProfileScene();
+  },
+  async signUp(username, pw) {
+    const u = String(username).trim();
+    if (!this.validName(u)) throw new Error('Usernames are 3 to 20 letters, numbers or underscores.');
+    const j = await this.authCall('signUp', { email: this.emailOf(u), password: pw });
+    this.setTokens(j, u); await this.afterLogin(true);
+  },
+  async signIn(username, pw) {
+    const u = String(username).trim();
+    const j = await this.authCall('signInWithPassword', { email: this.emailOf(u), password: pw });
+    this.setTokens(j, u); await this.afterLogin(false);
+  },
+  logout() { this.sess = null; this.save(); renderAccountChip(); },
+  /* local changes to the linked profile are pushed a moment later */
+  dirty() {
+    if (!this.on() || !this.sess || !this.sess.profileId || this.quiet) return;
+    clearTimeout(this.timer);
+    this.status = 'pending'; renderAccountChip();
+    this.timer = setTimeout(() => this.flush(), 2500);
+  },
+  async flush(keepalive) {
+    if (!this.sess || !this.sess.profileId || this.busy) return;
+    clearTimeout(this.timer);
+    this.busy = true;
+    try { await this.putSave(Profiles.snapshot(this.sess.profileId), keepalive); this.status = 'saved'; this.lastErr = null; }
+    catch (e) { this.status = 'error'; this.lastErr = e.message; this.timer = setTimeout(() => this.flush(), 30000); }
+    finally { this.busy = false; renderAccountChip(); }
+  },
+  /* on load: refresh the account from the online copy if it's newer than what this device has */
+  async resume() {
+    if (!this.on() || !this.sess) return;
+    try {
+      const remote = await this.getSave();
+      if (remote && remote.data && remote.updated > (this.sess.synced || 0) + 1000 && !(this.status === 'pending')) { this.adopt(remote.data); this.sess.synced = remote.updated; this.save(); Menu.refresh(); if (typeof applyProfileScene === 'function') applyProfileScene(); }
+      this.status = 'saved';
+    } catch (e) { this.status = 'error'; this.lastErr = e.message; }
+    renderAccountChip();
+  }
+};
+// any write to the linked profile marks the account dirty
+{ const set0 = store.set; store.set = (k, v) => { set0(k, v); if (Cloud.sess && Cloud.sess.profileId && (k === 'cst_profiles' || k.startsWith(`cst_p_${Cloud.sess.profileId}_`))) Cloud.dirty(); }; }
+addEventListener('pagehide', () => { if (Cloud.status === 'pending') Cloud.flush(true); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && Cloud.status === 'pending') Cloud.flush(true); });
+
+/* ---------------- interface ---------------- */
+function renderAccountChip() {
+  const b = $('#account-btn'); if (!b) return;
+  if (!Cloud.on()) { b.hidden = true; return; }
+  b.hidden = false;
+  const u = Cloud.user();
+  const st = Cloud.status === 'pending' ? 'Saving…' : Cloud.status === 'error' ? 'Not saved' : 'Saved';
+  b.innerHTML = u ? `<span class="acct-dot ${Cloud.status}"></span><span><b>${esc(u)}</b><small>${st}</small></span>` : `<span class="acct-dot off"></span><span><b>Log in</b><small>Save your account</small></span>`;
+  b.title = u ? (Cloud.status === 'error' ? 'Your latest changes are not saved online yet: ' + (Cloud.lastErr || '') : 'Your account is saved online') : 'Log in or create an account';
+}
+function accountDialog(startMode) {
+  if (!Cloud.on()) { toast('Online accounts are not set up yet.'); return; }
+  const u = Cloud.user();
+  if (u) {
+    const dlg = openDialog(`<h3>Signed in as ${esc(u)}</h3><p>Your profile, decks, settings, campaign progress and unlocks are saved online. Log in with the same username and password in any browser to pick up where you left off.</p>
+      <p class="hint">${Cloud.status === 'error' ? `Last save failed: ${esc(Cloud.errText(Cloud.lastErr))} It will try again automatically.` : Cloud.sess.synced ? `Last saved ${new Date(Cloud.sess.synced).toLocaleString()}.` : ''}</p>
+      <div class="acts"><button class="btn" data-x="out">Log out</button><button class="btn" data-x="sync">Save now</button><button class="btn gold" data-x="ok">Done</button></div>`, 'small');
+    $('[data-x=ok]', dlg).onclick = () => closeDialog(dlg);
+    $('[data-x=sync]', dlg).onclick = async () => { await Cloud.flush(); toast(Cloud.status === 'saved' ? 'Saved.' : Cloud.errText(Cloud.lastErr), Cloud.status === 'saved' ? '' : 'manual'); closeDialog(dlg); };
+    $('[data-x=out]', dlg).onclick = async () => { if (Cloud.status === 'pending') await Cloud.flush(); Cloud.logout(); closeDialog(dlg); toast('Logged out. Your profile stays on this device too.'); };
+    return;
+  }
+  let mode = startMode || (store.get('cst_last_user', '') ? 'in' : 'up');
+  const last = store.get('cst_last_user', '');
+  const dlg = openDialog(`<div id="acct"></div>`, 'small');
+  let typed = last;
+  const draw = (msg) => {
+    const up = mode === 'up';
+    const prevU = $('#acct-u', dlg); if (prevU) typed = prevU.value;
+    $('#acct', dlg).innerHTML = `<h3>${up ? 'Create an account' : 'Log in'}</h3>
+      <p class="hint">${up ? 'Pick a username and password. Your current profile, decks and campaign get saved to it, and you can log in from any browser or device.' : 'Log in to load your profile, decks and campaign.'}</p>
+      <div class="seg" id="acct-mode"><button data-v="in" aria-pressed="${!up}">Log in</button><button data-v="up" aria-pressed="${up}">Create account</button></div>
+      <form id="acct-f" class="opts1" autocomplete="on">
+        <div class="opt"><label class="lbl" for="acct-u">Username</label><input type="text" id="acct-u" name="username" autocomplete="username" maxlength="20" value="${esc(typed || '')}" placeholder="e.g. yaum_fan"></div>
+        <div class="opt"><label class="lbl" for="acct-p">Password</label><input type="password" id="acct-p" name="password" autocomplete="${up ? 'new-password' : 'current-password'}" minlength="6"></div>
+        ${up ? '<div class="opt"><label class="lbl" for="acct-p2">Password again</label><input type="password" id="acct-p2" autocomplete="new-password" minlength="6"></div><p class="hint">There is no email, so a forgotten password can\'t be reset. Pick one you\'ll remember.</p>' : ''}
+        <p class="acct-msg" id="acct-msg" role="alert">${msg ? esc(msg) : ''}</p>
+        <div class="acts"><button class="btn" type="button" data-x="c">Not now</button><button class="btn gold" type="submit" id="acct-go">${up ? 'Create account' : 'Log in'}</button></div>
+      </form>`;
+    $$('#acct-mode button', dlg).forEach(b => b.onclick = () => { mode = b.dataset.v; draw(); });
+    $('[data-x=c]', dlg).onclick = () => { try { sessionStorage.setItem('cst_acct_skip', '1'); } catch (e) { } closeDialog(dlg); };
+    setTimeout(() => { const f = $(typed ? '#acct-p' : '#acct-u', dlg); f && f.focus(); }, 30);
+    $('#acct-f', dlg).onsubmit = async e => {
+      e.preventDefault();
+      const name = $('#acct-u', dlg).value.trim(), pw = $('#acct-p', dlg).value;
+      if (!name || !pw) return draw('Enter a username and password.');
+      if (up && pw !== $('#acct-p2', dlg).value) return draw("The passwords don't match.");
+      if (up && !Cloud.validName(name)) return draw('Usernames are 3 to 20 letters, numbers or underscores.');
+      const go = $('#acct-go', dlg); go.disabled = true; go.textContent = up ? 'Creating…' : 'Logging in…';
+      try {
+        if (up) await Cloud.signUp(name, pw); else await Cloud.signIn(name, pw);
+        closeDialog(dlg); Sfx.play('select');
+        toast(up ? `Account created. Welcome, <b>${esc(name)}</b>! Your progress now saves online.` : `Welcome back, <b>${esc(name)}</b>!`);
+      } catch (err) { draw(Cloud.validName(name) || !up ? Cloud.errText(err.message) : err.message); }
+    };
+  };
+  draw();
+}
+/* a warning when this browser won't keep saves (downloaded file, private window, storage blocked) */
+function storageCheck() {
+  let ok = true;
+  try { localStorage.setItem('cst_probe', '1'); ok = localStorage.getItem('cst_probe') === '1'; localStorage.removeItem('cst_probe'); } catch (e) { ok = false; }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { }); } catch (e) { }
+  const fileMode = location.protocol === 'file:';
+  if (!ok || fileMode) {
+    const bar = document.createElement('div'); bar.className = 'save-warn';
+    bar.innerHTML = `<b>Your progress may not be saved here.</b> ${fileMode ? 'You opened the game from a downloaded file, and some browsers (Safari especially) forget everything when the tab closes.' : 'This browser is blocking saved data (a private window or strict privacy settings).'} ${Cloud.on() ? 'Log in to an account to keep your progress, or play' : 'Play'} at <a href="https://spinerbook.github.io/Yaum-Magic/">spinerbook.github.io/Yaum-Magic</a>.<button class="btn" type="button" aria-label="Dismiss">✕</button>`;
+    bar.querySelector('button').onclick = () => bar.remove();
+    document.body.appendChild(bar);
+  }
+}
+function cloudBoot() {
+  const b = $('#account-btn'); if (b) b.onclick = () => { Sfx.play('ui'); accountDialog(); };
+  renderAccountChip(); storageCheck();
+  if (!Cloud.on()) return;
+  if (Cloud.sess) Cloud.resume();
+  else {
+    let skip = false; try { skip = sessionStorage.getItem('cst_acct_skip') === '1'; } catch (e) { }
+    if (!skip) setTimeout(() => { if (!$('.scrim') && !$('#setup').hidden) accountDialog(store.get('cst_last_user', '') ? 'in' : 'in'); }, 1200);
+  }
+}
 
 ;
 /* =====================================================================
@@ -8820,6 +9344,7 @@ function renderMats() {
 function applyProfileScene() { try { const p = Profiles.current(); const k = p.scene && Story.has('scene:' + p.scene) ? p.scene : 'forest'; if (Scene.key() !== k) Scene.set(k); } catch (e) { } }
 boot();
 applyProfileScene();
+cloudBoot();
 
 </script>
 <script>if ('serviceWorker' in navigator && location.protocol.startsWith('http')) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
